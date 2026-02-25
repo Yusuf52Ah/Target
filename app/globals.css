@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --panel: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-space-grotesk);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-manrope), sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-space-grotesk), sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+.bg-app-gradient {
+  background:
+    radial-gradient(circle at 12% -6%, rgba(16, 185, 129, 0.2), transparent 38%),
+    radial-gradient(circle at 100% 8%, rgba(14, 165, 233, 0.16), transparent 30%),
+    linear-gradient(180deg, #020617 0%, #030712 60%, #020617 100%);
+}
+
+.bg-app-grid {
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at center, black 0, transparent 80%);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020617;
+}

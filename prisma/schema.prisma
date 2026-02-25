@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  SPECIALIST
+  ADMIN
+}
+
+enum ExperienceLevel {
+  BOSHLANGICH
+  ORTA
+  YUQORI
+  EKSPERT
+}
+
+enum OrderStatus {
+  KUTILMOQDA
+  QABUL_QILINDI
+  YAKUNLANDI
+  BEKOR_QILINDI
+}
+
+enum OrderPaymentStatus {
+  TOLANMAGAN
+  ESCROWDA
+  YECHILGAN
+  QAYTARILGAN
+}
+
+enum PricingType {
+  SOATLIK
+  LOYIHA_BOYICHA
+}
+
+enum PaymentProvider {
+  PAYME
+  CLICK
+  STRIPE
+}
+
+enum TransactionType {
+  ESCROW_HOLD
+  ESCROW_RELEASE
+  KOMISSIYA
+  TOLDIRISH
+  CHIQIM
+  KIRIM
+  QAYTARISH
+}
+
+enum TransactionStatus {
+  KUTILMOQDA
+  MUVAFFAQIYATLI
+  RAD_ETILDI
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(CLIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile         Profile?
+  accounts        Account[]
+  sessions        Session[]
+  reviewsGiven    Review[]      @relation("ClientReviews")
+  reviewsReceived Review[]      @relation("SpecialistReviews")
+  clientOrders    Order[]       @relation("ClientOrders")
+  specialistOrders Order[]      @relation("SpecialistOrders")
+  messagesSent    Message[]     @relation("MessageSender")
+  messagesReceived Message[]    @relation("MessageReceiver")
+  wallet          Wallet?
+  transactions    Transaction[]
+
+  @@index([role, createdAt])
+}
+
+model Profile {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  username        String          @unique
+  bio             String          @db.VarChar(320)
+  avatarUrl       String?
+  experienceLevel ExperienceLevel @default(ORTA)
+  businessNiche   String?         @db.VarChar(120)
+  hourlyRate      Int?
+  projectRate     Int?
+  pricingType     PricingType     @default(LOYIHA_BOYICHA)
+  completedJobs   Int             @default(0)
+  successRate     Int             @default(0)
+  totalEarnings   Decimal         @db.Decimal(14, 2) @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills     SpecialistSkill[]
+  portfolios Portfolio[]
+  reviews    Review[]
+
+  @@index([experienceLevel, hourlyRate])
+  @@index([businessNiche])
+}
+
+model Skill {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  users     SpecialistSkill[]
+
+  @@index([name])
+}
+
+model SpecialistSkill {
+  profileId String
+  skillId   String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, skillId])
+  @@index([skillId])
+}
+
+model Portfolio {
+  id          String    @id @default(cuid())
+  profileId   String
+  title       String    @db.VarChar(120)
+  description String    @db.Text
+  imageUrl    String
+  ctr         Decimal?  @db.Decimal(8, 2)
+  cpc         Decimal?  @db.Decimal(14, 2)
+  roi         Decimal?  @db.Decimal(8, 2)
+  budget      Decimal?  @db.Decimal(14, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  orderId      String   @unique
+  clientId     String
+  specialistId String
+  profileId    String
+  rating       Int
+  comment      String   @db.VarChar(500)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  client     User    @relation("ClientReviews", fields: [clientId], references: [id], onDelete: Cascade)
+  specialist User    @relation("SpecialistReviews", fields: [specialistId], references: [id], onDelete: Cascade)
+  profile    Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([specialistId, rating])
+  @@index([profileId, rating])
+}
+
+model Order {
+  id             String             @id @default(cuid())
+  clientId       String
+  specialistId   String
+  title          String             @db.VarChar(120)
+  description    String             @db.Text
+  budget         Decimal            @db.Decimal(14, 2)
+  commissionRate Decimal            @db.Decimal(5, 2) @default(12)
+  status         OrderStatus        @default(KUTILMOQDA)
+  paymentStatus  OrderPaymentStatus @default(TOLANMAGAN)
+  paymentProvider PaymentProvider?
+  escrowAmount   Decimal            @db.Decimal(14, 2) @default(0)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  client      User          @relation("ClientOrders", fields: [clientId], references: [id], onDelete: Cascade)
+  specialist  User          @relation("SpecialistOrders", fields: [specialistId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  review      Review?
+  transactions Transaction[]
+
+  @@index([clientId, status, createdAt])
+  @@index([specialistId, status, createdAt])
+  @@index([paymentStatus, createdAt])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  orderId    String
+  senderId   String
+  receiverId String
+  content    String   @db.VarChar(1000)
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sender   User  @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User  @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+  @@index([receiverId, isRead])
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Decimal  @db.Decimal(14, 2) @default(0)
+  currency  String   @default("UZS")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([balance])
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  walletId    String
+  userId      String
+  orderId     String?
+  amount      Decimal           @db.Decimal(14, 2)
+  type        TransactionType
+  status      TransactionStatus @default(KUTILMOQDA)
+  provider    PaymentProvider?
+  providerRef String?
+  note        String?           @db.VarChar(300)
+  createdAt   DateTime          @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([walletId, createdAt])
+  @@index([userId, type, createdAt])
+  @@index([orderId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
