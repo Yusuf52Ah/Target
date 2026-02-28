@@ -54,11 +54,11 @@ export default async function Home() {
         }, 0) / specialists.length
       : 0;
 
-  const completedOrders = Math.max(12, specialists.reduce((acc, item) => acc + item.reviewsCount, 0));
+  const completedOrders = specialists.reduce((acc, item) => acc + item.reviewsCount, 0);
 
   return (
     <div className="space-y-14 pb-8">
-      <Hero specialistsCount={specialists.length || 120} avgRoi={avgRoi || 4.1} completedOrders={completedOrders} />
+      <Hero specialistsCount={specialists.length} avgRoi={avgRoi} completedOrders={completedOrders} />
 
       <section className="space-y-6">
         <FadeIn>
@@ -68,13 +68,20 @@ export default async function Home() {
             description="Har bir profil real natija metrikalari va sharhlar bilan ko'rsatilgan."
           />
         </FadeIn>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {featured.map((specialist, index) => (
-            <FadeIn key={specialist.id} delay={0.05 * index}>
-              <SpecialistCard specialist={specialist} />
-            </FadeIn>
-          ))}
-        </div>
+        {featured.length === 0 ? (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 text-center">
+            <p className="text-sm text-slate-300">Hozircha mutaxassislar mavjud emas.</p>
+            <p className="mt-2 text-xs text-slate-500">Mutaxassislar ro'yxati bazadan yuklanadi.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {featured.map((specialist, index) => (
+              <FadeIn key={specialist.id} delay={0.05 * index}>
+                <SpecialistCard specialist={specialist} />
+              </FadeIn>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">

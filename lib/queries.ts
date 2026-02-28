@@ -1,8 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { mockDashboardStats, mockMessages, mockOrders, mockSpecialistDetails, mockSpecialists } from "@/lib/mock-data";
 import { prisma } from "@/lib/prisma";
-import { safeNumber } from "@/lib/utils";
 import type {
   ConversationMessage,
   DashboardStats,
@@ -12,29 +10,21 @@ import type {
   SpecialistDetailData,
 } from "@/types";
 
-function hasDatabase() {
+function hasDatabaseUrl() {
   return Boolean(process.env.DATABASE_URL);
 }
 
-function applySpecialistFilters(data: SpecialistCardData[], filters: SearchFilters) {
-  return data.filter((item) => {
-    const bySkill = filters.skill
-      ? item.skills.some((skill) => skill.toLowerCase().includes(filters.skill!.toLowerCase()))
-      : true;
-    const byMinPrice = filters.minPrice ? safeNumber(item.hourlyRate) >= filters.minPrice : true;
-    const byMaxPrice = filters.maxPrice ? safeNumber(item.hourlyRate) <= filters.maxPrice : true;
-    const byRating = filters.minRating ? item.rating >= filters.minRating : true;
-    const byLevel = filters.level ? item.tajribaDarajasi === filters.level : true;
-    const byNiche = filters.niche
-      ? (item.biznesNisha ?? "").toLowerCase().includes(filters.niche.toLowerCase())
-      : true;
-    return bySkill && byMinPrice && byMaxPrice && byRating && byLevel && byNiche;
-  });
-}
+const EMPTY_DASHBOARD_STATS: DashboardStats = {
+  jamiBuyurtma: 0,
+  faolBuyurtma: 0,
+  yakunlanganBuyurtma: 0,
+  hamyonBalansi: 0,
+  daromad: 0,
+};
 
 export async function getSpecialists(filters: SearchFilters = {}): Promise<SpecialistCardData[]> {
-  if (!hasDatabase()) {
-    return applySpecialistFilters(mockSpecialists, filters);
+  if (!hasDatabaseUrl()) {
+    return [];
   }
 
   try {
@@ -105,16 +95,21 @@ export async function getSpecialists(filters: SearchFilters = {}): Promise<Speci
       };
     });
 
-    return filters.minRating ? mapped.filter((item) => item.rating >= filters.minRating!) : mapped;
+    const minRating = filters.minRating;
+    if (minRating === undefined) {
+      return mapped;
+    }
+
+    return mapped.filter((item) => item.rating >= minRating);
   } catch (error) {
     console.error("Mutaxassislar ro'yxati olinmadi:", error);
-    return applySpecialistFilters(mockSpecialists, filters);
+    return [];
   }
 }
 
 export async function getSpecialistByUsername(username: string): Promise<SpecialistDetailData | null> {
-  if (!hasDatabase()) {
-    return mockSpecialistDetails.find((item) => item.username === username) ?? null;
+  if (!hasDatabaseUrl()) {
+    return null;
   }
 
   try {
@@ -183,13 +178,13 @@ export async function getSpecialistByUsername(username: string): Promise<Special
     };
   } catch (error) {
     console.error("Mutaxassis profili olinmadi:", error);
-    return mockSpecialistDetails.find((item) => item.username === username) ?? null;
+    return null;
   }
 }
 
 export async function getOrdersForUser(userId?: string): Promise<OrderCardData[]> {
-  if (!userId || !hasDatabase()) {
-    return mockOrders;
+  if (!userId || !hasDatabaseUrl()) {
+    return [];
   }
 
   try {
@@ -222,13 +217,13 @@ export async function getOrdersForUser(userId?: string): Promise<OrderCardData[]
     }));
   } catch (error) {
     console.error("Buyurtmalar olinmadi:", error);
-    return mockOrders;
+    return [];
   }
 }
 
 export async function getMessagesForUser(userId?: string): Promise<ConversationMessage[]> {
-  if (!userId || !hasDatabase()) {
-    return mockMessages;
+  if (!userId || !hasDatabaseUrl()) {
+    return [];
   }
 
   try {
@@ -257,13 +252,13 @@ export async function getMessagesForUser(userId?: string): Promise<ConversationM
     }));
   } catch (error) {
     console.error("Xabarlar olinmadi:", error);
-    return mockMessages;
+    return [];
   }
 }
 
 export async function getDashboardStats(userId?: string): Promise<DashboardStats> {
-  if (!userId || !hasDatabase()) {
-    return mockDashboardStats;
+  if (!userId || !hasDatabaseUrl()) {
+    return EMPTY_DASHBOARD_STATS;
   }
 
   try {
@@ -304,18 +299,18 @@ export async function getDashboardStats(userId?: string): Promise<DashboardStats
     };
   } catch (error) {
     console.error("Dashboard statistikasi olinmadi:", error);
-    return mockDashboardStats;
+    return EMPTY_DASHBOARD_STATS;
   }
 }
 
 export async function getAdminStats() {
-  if (!hasDatabase()) {
+  if (!hasDatabaseUrl()) {
     return {
-      usersCount: 34,
-      specialistsCount: 21,
-      ordersCount: 56,
-      escrowTotal: 11400000,
-      platformRevenue: 2370000,
+      usersCount: 0,
+      specialistsCount: 0,
+      ordersCount: 0,
+      escrowTotal: 0,
+      platformRevenue: 0,
     };
   }
 

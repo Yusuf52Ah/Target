@@ -1,14 +1,38 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
+import GoogleIcon from "@/public/google.png";
+import GithubIcon from "@/public/github.png";
 
 import { Button } from "@/components/ui/button";
 
-export function LoginForm() {
+type LoginFormProps = {
+  initialError?: string;
+  callbackUrl?: string;
+};
+
+function mapAuthError(error?: string | null) {
+  if (!error) {
+    return "";
+  }
+
+  if (error === "AccessDenied") {
+    return "Bu email ro'yxatdan o'tmagan. Avval ro'yxatdan o'ting.";
+  }
+
+  if (error === "Verification") {
+    return "Kirish havolasi eskirgan yoki noto'g'ri.";
+  }
+
+  return "Kirishda xatolik yuz berdi. Qayta urinib ko'ring.";
+}
+
+export function LoginForm({ initialError, callbackUrl = "/dashboard" }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [xabar, setXabar] = useState("");
-  const [xato, setXato] = useState("");
+  const [xato, setXato] = useState(mapAuthError(initialError));
   const [loading, setLoading] = useState(false);
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -20,11 +44,11 @@ export function LoginForm() {
     const result = await signIn("email", {
       email,
       redirect: false,
-      callbackUrl: "/dashboard",
+      callbackUrl,
     });
 
     if (!result || result.error) {
-      setXato("Kirish havolasini yuborishda xatolik yuz berdi.");
+      setXato(mapAuthError(result?.error));
       setLoading(false);
       return;
     }
@@ -59,8 +83,14 @@ export function LoginForm() {
         <span className="bg-slate-900 px-2">yoki</span>
       </div>
 
-      <Button type="button" variant="secondary" className="w-full" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+      <Button type="button" variant="secondary" className="w-full" onClick={() => signIn("google", { callbackUrl })}>
+        <Image src={GoogleIcon} alt="Google" width={16} height={16} className="mr-2 inline h-4 w-4" />
         Google orqali kirish
+      </Button>
+
+      <Button variant="secondary" type="button" className="w-full" onClick={() => signIn("github", { callbackUrl })}>
+        <Image src={GithubIcon} alt="GitHub" width={16} height={16} className="mr-2 inline h-4 w-4" />
+        GitHub orqali kirish
       </Button>
 
       {xabar ? <p className="text-xs text-emerald-300">{xabar}</p> : null}

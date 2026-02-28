@@ -26,7 +26,7 @@ export function SessionControls() {
       <Link href="/dashboard" className="rounded-xl border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200">
         Kabinet
       </Link>
-      <Button variant="ghost" className="px-3 py-2 text-xs" onClick={() => signOut({ callbackUrl: "/" })}>
+      <Button variant="ghost" className="px-3 py-2 text-xs" onClick={() => signOut({ callbackUrl: "/login" })}>
         Chiqish
       </Button>
     </div>

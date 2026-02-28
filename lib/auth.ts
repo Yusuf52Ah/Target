@@ -45,6 +45,28 @@ export const authOptions: NextAuthOptions = {
   },
   providers,
   callbacks: {
+    async signIn({ user, profile, email }) {
+      const emailPayload = email as { email?: string } | undefined;
+      const sourceEmail = user.email ?? emailPayload?.email ?? (typeof profile?.email === "string" ? profile.email : "");
+      const normalizedEmail = sourceEmail.trim().toLowerCase();
+
+      if (!normalizedEmail) {
+        return false;
+      }
+
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: {
+            equals: normalizedEmail,
+            mode: "insensitive",
+          },
+        },
+        select: { id: true },
+      });
+
+      // Block first-time sign-ins; users must be created via register flow.
+      return Boolean(existingUser);
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

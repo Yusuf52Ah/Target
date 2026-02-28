@@ -73,7 +73,7 @@ export function Hero({ specialistsCount, avgRoi, completedOrders }: HeroProps) {
         >
           <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-500">Mutaxassislar soni</p>
-            <p className="mt-2 text-2xl font-semibold text-white">{formatNumber(specialistsCount)}+</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{formatNumber(specialistsCount)}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-500">O'rtacha ROI</p>
