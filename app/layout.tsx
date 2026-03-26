@@ -5,7 +5,6 @@ import Script from "next/script";
 import { SiteFooter } from "@/shared/layout/site-footer";
 import { SiteHeader } from "@/shared/layout/site-header";
 import { getSafeSiteUrl } from "@/lib/env";
-import { getToken } from "@/lib/auth-server";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -63,8 +62,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const initialToken = await getToken();
-
   return (
     <html lang="uz" data-theme="dark" suppressHydrationWarning>
       <head>
@@ -73,7 +70,7 @@ export default async function RootLayout({
         </Script>
       </head>
       <body className={`${manrope.variable} ${spaceGrotesk.variable} bg-slate-950 text-slate-100 antialiased`}>
-        <Providers initialToken={initialToken}>
+        <Providers>
           <div className="relative min-h-screen overflow-x-hidden">
             <div className="fixed inset-0 -z-10 bg-app-grid opacity-70" />
             <div className="fixed inset-0 -z-10 bg-app-gradient" />

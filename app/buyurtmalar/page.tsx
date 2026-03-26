@@ -20,42 +20,43 @@ const paymentStatusLabels: Record<string, string> = {
   QAYTARILGAN: "Qaytarilgan",
 };
 
+const demoOrders: OrderCardData[] = [
+  {
+    id: "demo-1",
+    title: "Instagram reklama kampaniyasi",
+    description: "Kiyim brendi uchun 7 kunlik reklama setlari.",
+    budget: 1500000,
+    escrowAmount: 1350000,
+    status: "KUTILMOQDA",
+    paymentStatus: "TOLANMAGAN",
+    commissionRate: 10,
+    clientId: "demo-client",
+    clientName: "Demo Mijoz",
+    specialistId: "demo-specialist",
+    specialistName: "Demo Mutaxassis",
+    createdAt: new Date("2026-03-26T09:00:00.000Z"),
+    provider: "PAYME",
+  },
+  {
+    id: "demo-2",
+    title: "Lead generation kampaniya",
+    description: "Telegram guruhga 300+ lead olib kelish.",
+    budget: 2800000,
+    escrowAmount: 2520000,
+    status: "QABUL_QILINDI",
+    paymentStatus: "ESCROWDA",
+    commissionRate: 10,
+    clientId: "demo-client",
+    clientName: "Demo Mijoz",
+    specialistId: "demo-specialist",
+    specialistName: "Demo Mutaxassis",
+    createdAt: new Date("2026-03-25T09:00:00.000Z"),
+    provider: "CLICK",
+  },
+];
+
 export default async function OrdersPage() {
   const session = await getCurrentSession();
-  const demoOrders: OrderCardData[] = [
-    {
-      id: "demo-1",
-      title: "Instagram reklama kampaniyasi",
-      description: "Kiyim brendi uchun 7 kunlik reklama setlari.",
-      budget: 1500000,
-      escrowAmount: 1350000,
-      status: "KUTILMOQDA",
-      paymentStatus: "TOLANMAGAN",
-      commissionRate: 10,
-      clientId: "demo-client",
-      clientName: "Demo Mijoz",
-      specialistId: "demo-specialist",
-      specialistName: "Demo Mutaxassis",
-      createdAt: new Date(),
-      provider: "PAYME",
-    },
-    {
-      id: "demo-2",
-      title: "Lead generation kampaniya",
-      description: "Telegram guruhga 300+ lead olib kelish.",
-      budget: 2800000,
-      escrowAmount: 2520000,
-      status: "QABUL_QILINDI",
-      paymentStatus: "ESCROWDA",
-      commissionRate: 10,
-      clientId: "demo-client",
-      clientName: "Demo Mijoz",
-      specialistId: "demo-specialist",
-      specialistName: "Demo Mutaxassis",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      provider: "CLICK",
-    },
-  ];
   const orders = session ? await getOrdersForUser(session.user.id) : demoOrders;
 
   return (

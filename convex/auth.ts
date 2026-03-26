@@ -1,11 +1,10 @@
 import { BetterAuth, convexAdapter } from "@convex-dev/better-auth";
-import type { AuthFunctions } from "@convex-dev/better-auth";
+import type { AuthFunctions, PublicAuthFunctions } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth";
 import type { GenericActionCtx } from "convex/server";
 
-import authConfig from "./auth.config";
-import { components } from "./_generated/api";
+import { api, components, internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 
@@ -15,13 +14,18 @@ const siteUrl =
   process.env.NEXTAUTH_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
   (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
+const basePath = process.env.BETTER_AUTH_BASE_PATH ?? "/api/auth";
 
 if (!siteUrl) {
   throw new Error("SITE_URL is not set");
 }
 
-const baseAuthComponent = new BetterAuth<DataModel>(components.betterAuth, {
-  authFunctions: {} as AuthFunctions,
+const authFunctions: AuthFunctions = internal.auth as unknown as AuthFunctions;
+const publicAuthFunctions: PublicAuthFunctions = api.auth as unknown as PublicAuthFunctions;
+
+export const authComponent = new BetterAuth(components.betterAuth, {
+  authFunctions,
+  publicAuthFunctions,
 });
 
 export const {
@@ -30,25 +34,14 @@ export const {
   updateUser,
   createSession,
   isAuthenticated,
-} = baseAuthComponent.createAuthFunctions<DataModel>({
+} = authComponent.createAuthFunctions<DataModel>({
   onCreateUser: async (_ctx, user) => user.email.toLowerCase(),
-});
-
-export const authComponent = new BetterAuth<DataModel>(components.betterAuth, {
-  authFunctions: {
-    createUser,
-    deleteUser,
-    updateUser,
-    createSession,
-  },
-  publicAuthFunctions: {
-    isAuthenticated,
-  },
 });
 
 export const createAuth = (ctx: GenericActionCtx<DataModel>) =>
   betterAuth({
     baseURL: siteUrl,
+    basePath,
     database: convexAdapter(ctx, authComponent),
     emailVerification: {
       sendOnSignUp: false,
@@ -59,7 +52,7 @@ export const createAuth = (ctx: GenericActionCtx<DataModel>) =>
       requireEmailVerification: false,
       autoSignIn: true,
     },
-    plugins: [convex({ authConfig })],
+    plugins: [convex({ options: { basePath } })],
   });
 
 export const getCurrentUser = query({
